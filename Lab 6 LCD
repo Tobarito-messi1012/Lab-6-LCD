@@ -1,0 +1,118 @@
+#include <Arduino.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h> 
+
+// Configuración de la pantalla LCD I2C
+LiquidCrystal_I2C lcd(0x27, 16, 2); // La dirección 0x27 puede variar, dependiendo del módulo I2C de tu pantalla.
+
+#define Pot1 39
+#define Pot2 36
+#define bot1 35
+#define bot2 33
+
+uint8_t decenas, unidades, decimal, decenas1, unidades1, decimal1, decenas2, unidades2, decimal2;
+unsigned int adcRaw;
+float voltaje, voltaje2;
+unsigned long counter = 0;
+unsigned long lastButtonUpState = LOW;
+unsigned long lastButtonDownState = LOW;
+
+void setup ()
+{
+    pinMode(bot1, INPUT_PULLUP); // Habilitar resistencia interna de pull-up
+    pinMode(bot2, INPUT_PULLUP); // Habilitar resistencia interna de pull-up
+    
+    Serial.begin(115200);
+    // Inicialización de la pantalla LCD I2C
+    lcd.init(); // Inicializa la LCD
+    lcd.backlight(); // Enciende la retroiluminación de la pantalla
+
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("hello world!");
+    
+    delay(3000);
+    lcd.clear();
+}
+
+void loop ()
+{
+    voltaje = analogReadMilliVolts(Pot1) / 10.0;
+    int temp = voltaje;
+    decenas = temp / 100.0;
+    temp = temp - decenas * 100.0;
+    unidades = temp / 10.0;
+    temp = temp - unidades * 10.0;
+    decimal = temp; 
+
+    lcd.setCursor(0, 0);
+    lcd.print("Volt1");
+    lcd.setCursor(0, 1);
+    lcd.print(decenas);
+    lcd.print('.');
+    lcd.print(unidades);
+    lcd.print(decimal);
+
+    delay(250);
+
+    voltaje2 = analogReadMilliVolts(Pot2) / 10.0;
+    int temp2 = voltaje2;
+    decenas1 = temp2 / 100.0;
+    temp2 = temp2 - decenas1 * 100.0;
+    unidades1 = temp2 / 10.0;
+    temp2 = temp2 - unidades1 * 10.0;
+    decimal1 = temp2; 
+
+    lcd.setCursor(6, 0);
+    lcd.print("Volt2");
+    lcd.setCursor(6, 1);
+    lcd.print(decenas1);
+    lcd.print('.');
+    lcd.print(unidades1);
+    lcd.print(decimal1);
+
+    delay(250);
+
+   // Lectura del estado de los botones (botones con lógica invertida por PULLUP)
+    bool buttonUpState = !digitalRead(bot1);  // Invertir la lectura debido a la resistencia PULLUP
+    bool buttonDownState = !digitalRead(bot2); // Invertir la lectura debido a la resistencia PULLUP
+   
+    //valores contador
+    int cont = counter;
+    decenas2 = counter / 100.0;
+    counter = counter - decenas2 * 100.0;
+    unidades2 = counter / 10.0;
+    counter = counter - unidades2 * 10.0;
+    decimal2 = counter; 
+
+    // Muestra el contador
+    lcd.setCursor(12, 0);
+    lcd.print("Cont");
+    lcd.setCursor(12, 1); 
+    lcd.print(decenas2);
+    lcd.print('.');
+    lcd.print(unidades2);
+    lcd.print(decimal2);  
+
+    // Incrementar el contador
+if (buttonUpState == HIGH && lastButtonUpState == LOW) {
+    if (counter == 255) {
+        counter = 0;
+    } else {
+        counter++;
+    }
+}
+
+// Decrementar el contador
+if (buttonDownState == HIGH && lastButtonDownState == LOW) {
+    if (counter > 0) {
+        counter--;
+    }
+}
+
+// Actualizar el estado de los botones
+lastButtonUpState = buttonUpState;
+lastButtonDownState = buttonDownState;
+
+    delay(400);
+}
